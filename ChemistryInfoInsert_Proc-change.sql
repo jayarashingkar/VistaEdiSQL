@@ -1,6 +1,6 @@
 ﻿USE [VistaEdiDB]
 GO
-/****** Object:  StoredProcedure [dbo].[ChemistryInfoInsert_Proc]    Script Date: 2/16/2018 7:27:03 AM ******/
+/****** Object:  StoredProcedure [dbo].[ChemistryInfoInsert_Proc]    Script Date: 2/21/2018 11:35:16 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -56,19 +56,29 @@ BEGIN
 	IF EXISTS (SELECT * FROM [ChemDetail] WHERE [HeatNo] = @HeatNumber)
 	BEGIN
 		SET  @returnMessage = 'HEATNOEXISTS'
-		SET @Status = '2'
+		IF ( @Status != '3')
+			   SET @Status = '2'
 	END
-	ELSE
-	BEGIN 		
-		IF NOT EXISTS (SELECT * FROM [dbo].[bltorder] WHERE [HEAT_LOT] = @HeatNumber)
-		BEGIN			
+		
+	IF NOT EXISTS (SELECT * FROM [dbo].[bltorder] WHERE [HEAT_LOT] = @HeatNumber)
+	BEGIN			
 			SET @returnMessage = 'Heat No. does not exist in bltorder'	
-			SET @Status = '2'		
-		END
-		ELSE
-		BEGIN	
+			IF ( @Status != '3')
+			BEGIN
+			   SET @Status = '2'	
+			END
+			SET @UACCode  = ''
+			SET @Plant  = ''
+				
+	END
+		--ELSE
+	IF (@Status != '2')
+	BEGIN	
+			IF EXISTS (SELECT top 1 Code FROM [dbo].[bltorder] WHERE [HEAT_LOT] = @HeatNumber)
+			BEGIN
 				SET @UACCode = (SELECT top 1 Code FROM [dbo].[bltorder] WHERE [HEAT_LOT] = @HeatNumber)
 				SET @Plant = (SELECT top 1 Plant FROM [dbo].[bltorder] WHERE [HEAT_LOT] = @HeatNumber)
+			END
 				SET @maxDetialID = (SELECT MAX([DetailID]) FROM [ChemDetail] )+1
 
 				SET  @returnMessage = ''
@@ -89,6 +99,7 @@ BEGIN
 				--SET @tempChemicals = fnCheckMinMaxChem( @Alloy,@Diameter, @chemValue ,@chemName)	
 									
 				SET @tempChemicals = 'PASS'
+
 				IF (RTRIM(@tempChemicals) != 'PASS')
 				BEGIN 
 					SET @Status = '2' 
@@ -97,16 +108,19 @@ BEGIN
 					ELSE
 						SET @returnMessage = @returnMessage + ', ' + @tempChemicals
 				END
-				ELSE
-				BEGIN
-					SET @Status = '1' 
-				END
+				
+				--IF (RTRIM(@tempChemicals) != 'PASS')AND(@Status != '2')
+				--BEGIN
+				--	SET @Status = '1' 
+				--END
+
 				--	if all the values are in limits (@returnMessage = 'PASS')	
 				-- is status is 1
 				-- or if the values are not in limits but status is 3 (user accepted the deviation)	
 				--in above cases insert values in table : [ChemDetail] and [ChemInfo]
 
-				IF (@returnMessage = 'PASS') AND ((@Status = '1') OR (@Status = '3'))
+				--IF (@returnMessage = 'PASS') AND ((@Status = '1') OR (@Status = '3'))
+				IF ((@Status = '1') OR (@Status = '3'))
 				BEGIN
 					INSERT [dbo].[ChemDetail](
 					[HeatNo], [UACCode], [Type], [DetailID], Si , Fe , Cu, Mn, Mg, Cr, Ni, Zn, Ti, V, Pb, B, Be, Na,
@@ -134,7 +148,7 @@ BEGIN
 
 
 				END
-		END
+		--END
 	END
 -- If the values are not within the min/max limits STATUS IS RETURNED AS '2'
 --@returnMessage returns the list of Chemicals that are not in the limits
