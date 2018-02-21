@@ -73,22 +73,40 @@ BEGIN
 
 				SET  @returnMessage = ''
 
-				--@chemName = 'Si'
+
+				--check for each Chemical in this list if its values are within the limits 
+				-- the function fnCheckMinMaxChem - checks if the value is in limits
 
 				--insert into #temptable (@Si , @Fe , @Cu, @Mn, @Mg, @Cr, @Ni, @Zn, @Ti, @V,
 				--@Pb, @B, @Be, @Na, @Ca, @Bi, @Zr, @Li, @Ag, @Sc, @Sr, @TiZr )
+				--e.g.
+				--@chemName = 'Si'
+				--@chemValue = @Si
 
-				SET @tempChemicals = fnCheckMinMaxChem( @Alloy,@Diameter, @Si ,@chemName)				
+				-- fnCheckMinMaxChem : checks if the sent value of chemical name is within the min/max value
+				-- if the chemValue is within limits then it sends 'PASS'
+				-- if it not within value then it send @chemName  
+				--SET @tempChemicals = fnCheckMinMaxChem( @Alloy,@Diameter, @chemValue ,@chemName)	
+									
+				SET @tempChemicals = 'PASS'
 				IF (RTRIM(@tempChemicals) != 'PASS')
 				BEGIN 
 					SET @Status = '2' 
 					IF (@returnMessage = '')
-						@returnMessage = @tempChemicals
+						SET @returnMessage = @tempChemicals
 					ELSE
-						@returnMessage = @returnMessage + ', ' + @tempChemicals
+						SET @returnMessage = @returnMessage + ', ' + @tempChemicals
 				END
-							
-				IF (@returnMessage = '') AND ((@Status = '1') OR (@Status = '3'))
+				ELSE
+				BEGIN
+					SET @Status = '1' 
+				END
+				--	if all the values are in limits (@returnMessage = 'PASS')	
+				-- is status is 1
+				-- or if the values are not in limits but status is 3 (user accepted the deviation)	
+				--in above cases insert values in table : [ChemDetail] and [ChemInfo]
+
+				IF (@returnMessage = 'PASS') AND ((@Status = '1') OR (@Status = '3'))
 				BEGIN
 					INSERT [dbo].[ChemDetail](
 					[HeatNo], [UACCode], [Type], [DetailID], Si , Fe , Cu, Mn, Mg, Cr, Ni, Zn, Ti, V, Pb, B, Be, Na,
@@ -113,10 +131,14 @@ BEGIN
 					SELECT @RecId = [RecId]
 					FROM [dbo].[ChemInfo]
 					WHERE @@ROWCOUNT > 0 AND [RecId] = scope_identity()
+
+
 				END
 		END
 	END
 -- If the values are not within the min/max limits STATUS IS RETURNED AS '2'
+--@returnMessage returns the list of Chemicals that are not in the limits
+
 select @returnMessage, @Status
 
 END
