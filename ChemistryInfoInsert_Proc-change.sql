@@ -1,6 +1,6 @@
 ﻿USE [VistaEdiDB]
 GO
-/****** Object:  StoredProcedure [dbo].[ChemistryInfoInsert_Proc]    Script Date: 2/23/2018 10:27:42 AM ******/
+/****** Object:  StoredProcedure [dbo].[ChemistryInfoInsert_Proc]    Script Date: 2/26/2018 11:07:36 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -45,6 +45,8 @@ ALTER PROCEDURE
 AS
 BEGIN
 	DECLARE @returnMessage  varchar(150) = 'PASS'
+	DECLARE @returnHeatNo  varchar(150) = ''
+
 	DECLARE @tempChemicals  varchar(15) = ''
 	DECLARE @UACCode varchar(10) = '0'
 	DECLARE @Plant varchar(10) = '0'
@@ -61,6 +63,7 @@ BEGIN
 		BEGIN
 			   SET @Status = '2'
 			   SET @returnMessage = 'RECORD WITH HEAT NO ALREADY EXISTS'
+			   SET @returnHeatNo = @HeatNumber
 		END
 	END
 		
@@ -70,6 +73,7 @@ BEGIN
 			BEGIN
 			   SET @Status = '2'	
 			   SET @returnMessage = 'Heat No. does not exist in bltorder'	
+			   SET @returnHeatNo = @HeatNumber
 			END
 			SET @UACCode  = ''
 			SET @Plant  = ''
@@ -83,10 +87,13 @@ BEGIN
 				SET @UACCode = (SELECT top 1 Code FROM [dbo].[bltorder] WHERE [HEAT_LOT] = @HeatNumber)
 				SET @Plant = (SELECT top 1 Plant FROM [dbo].[bltorder] WHERE [HEAT_LOT] = @HeatNumber)
 			END
+			
 			SET @maxDetialID = (SELECT MAX([DetailID]) FROM [ChemDetail] )+1
+			IF (@maxDetialID IS NULL)
+				SET @maxDetialID = 1
 
 			SET  @returnMessage = ''
-
+			SET @returnHeatNo = ''
 			--  checks if every chemical is within the min/max value from table chemMinMax01
 			-- if it not within value then send the chemical name that is not in limit 
 				
@@ -128,8 +135,11 @@ BEGIN
 					IF (@Status != '3')
 					BEGIN
 						SET @Status = '2'
+												
 						IF (@returnMessage = '')
-								SET @returnMessage = 'Si'
+						BEGIN
+								SET @returnMessage = 'Si'								
+						END
 						ELSE
 								SET @returnMessage = @returnMessage + ', ' + 'Si'
 					END
@@ -1427,44 +1437,48 @@ BEGIN
 			END
 			
 			--end				
-			
-				IF ((@Status = '1') OR (@Status = '3'))
-				BEGIN
-					INSERT [dbo].[ChemDetail](
-					[HeatNo], [UACCode], [Type], [DetailID], Si , Fe , Cu, Mn, Mg, Cr, Ni, Zn, Ti, V, Pb, B, Be, Na,
-					Ca, Bi, Zr, Li, Ag, Sc, Sr, TiZr )
-					VALUES (
-					@HeatNumber, @UACCode, 'S', @maxDetialID, @Si , @Fe , @Cu, @Mn, @Mg, @Cr, @Ni, @Zn, @Ti, @V,
-					@Pb, @B, @Be, @Na, @Ca, @Bi, @Zr, @Li, @Ag, @Sc, @Sr, @TiZr )
+			IF (@Status = '2')
+			BEGIN
+				IF (@returnHeatNo = '')
+					SET @returnHeatNo = @HeatNumber
+			END
+
+			IF ((@Status = '1') OR (@Status = '3'))
+			BEGIN
+				INSERT [dbo].[ChemDetail](
+				[HeatNo], [UACCode], [Type], [DetailID], Si , Fe , Cu, Mn, Mg, Cr, Ni, Zn, Ti, V, Pb, B, Be, Na,
+				Ca, Bi, Zr, Li, Ag, Sc, Sr, TiZr )
+				VALUES (
+				@HeatNumber, @UACCode, 'S', @maxDetialID, @Si , @Fe , @Cu, @Mn, @Mg, @Cr, @Ni, @Zn, @Ti, @V,
+				@Pb, @B, @Be, @Na, @Ca, @Bi, @Zr, @Li, @Ag, @Sc, @Sr, @TiZr )
    	
-				    --------------------------------------------------------------------------------------------------------
+				--------------------------------------------------------------------------------------------------------
 
-					DECLARE @RecId int
+				DECLARE @RecId int
 
-					SELECT @RecId = [RecId]
-					FROM [dbo].[ChemDetail]
-					WHERE @@ROWCOUNT > 0 AND [RecId] = scope_identity()
+				SELECT @RecId = [RecId]
+				FROM [dbo].[ChemDetail]
+				WHERE @@ROWCOUNT > 0 AND [RecId] = scope_identity()
 
-					INSERT INTO [ChemInfo] 
-					([Supplier],[EntryDate], [HeatNo] , [UACCode],  [Alloy], [Plant], [Diameter], [Status])
-					 VALUES
-					 ('Vista', @ShipmentDate , @HeatNumber , @UACCode, @Alloy , @Plant, @Diameter , @Status )
+				INSERT INTO [ChemInfo] 
+				([Supplier],[EntryDate], [HeatNo] , [UACCode],  [Alloy], [Plant], [Diameter], [Status])
+					VALUES
+					('Vista', @ShipmentDate , @HeatNumber , @UACCode, @Alloy , @Plant, @Diameter , @Status )
     
-					SELECT @RecId = [RecId]
-					FROM [dbo].[ChemInfo]
-					WHERE @@ROWCOUNT > 0 AND [RecId] = scope_identity()
+				SELECT @RecId = [RecId]
+				FROM [dbo].[ChemInfo]
+				WHERE @@ROWCOUNT > 0 AND [RecId] = scope_identity()
 
 
-				END
+			END
 		--END
 	END
 -- If the values are not within the min/max limits STATUS IS RETURNED AS '2'
 --@returnMessage returns the list of Chemicals that are not in the limits
+--@returnHeatNo resturns the Heat Number that has the deviation. If the record doesn't have deviation, 
+--@returnHeatNo is ''
 
 
-select @returnMessage
---TESTING tempChemicals
---select @tempChemicals, @Status
---select @returnMessage,@hSi
+select @returnMessage , @returnHeatNo
 
 END
