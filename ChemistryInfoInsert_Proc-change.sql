@@ -111,8 +111,13 @@ BEGIN
 
 			IF (@returnMessage = 'PASS')
 			BEGIN
-				SET  @returnMessage = '<br /> List of deviated Chemicals:'
-				SET @returnHeatNo = ''
+				IF (@Status != 3)
+					SET  @returnMessage = '<br /> List of deviated Chemicals:'
+				ELSE 
+				BEGIN
+					SET @returnMessage = ''
+					SET @returnHeatNo = ''
+				END
 			END
 			ELSE
 				SET @returnMessage = @returnMessage  + '<br /> List of deviated Chemicals:'
@@ -162,7 +167,7 @@ BEGIN
 						--BEGIN
 						--		SET @returnMessage = 'Si'								
 						--END
-						ELSE
+						--ELSE
 								SET @returnMessage = @returnMessage + '  ' + 'Si'
 					END
 					--ELSE
