@@ -62,7 +62,16 @@ BEGIN
 		IF ( @Status != '3')
 		BEGIN
 			   SET @Status = '2'
-			   SET @returnMessage = 'RECORD WITH HEAT NO ALREADY EXISTS'
+
+			   IF (@returnMessage = 'PASS')
+				BEGIN
+					SET @returnMessage = 'Record with heat number already exists'							
+				END
+				ELSE
+				BEGIN
+					SET @returnMessage = @returnMessage + ',  ' + 'Record with heat number already exists'
+				END
+			  -- SET @returnMessage = 'RECORD WITH HEAT NO ALREADY EXISTS'
 			   SET @returnHeatNo = @HeatNumber
 		END
 	END
@@ -72,7 +81,15 @@ BEGIN
 			IF ( @Status != '3')
 			BEGIN
 			   SET @Status = '2'	
-			   SET @returnMessage = 'Heat No. does not exist in bltorder'	
+			   --SET @returnMessage = 'Heat No. does not exist in bltorder'	
+			    IF (@returnMessage = 'PASS')
+				BEGIN
+					SET @returnMessage = 'Heat No. does not exist in bltorder'								
+				END
+				ELSE
+				BEGIN
+					SET @returnMessage = @returnMessage + ', ' + 'Heat number does not exist in bltorder'	
+				END
 			   SET @returnHeatNo = @HeatNumber
 			END
 			SET @UACCode  = ''
@@ -80,8 +97,8 @@ BEGIN
 				
 	END
 		--ELSE
-	IF (@Status != '2')
-	BEGIN	
+	--IF (@Status != '2')
+	--BEGIN	
 			IF EXISTS (SELECT * FROM [dbo].[bltorder] WHERE [HEAT_LOT] = @HeatNumber)
 			BEGIN
 				SET @UACCode = (SELECT top 1 Code FROM [dbo].[bltorder] WHERE [HEAT_LOT] = @HeatNumber)
@@ -92,8 +109,13 @@ BEGIN
 			IF (@maxDetialID IS NULL)
 				SET @maxDetialID = 1
 
-			SET  @returnMessage = ''
-			SET @returnHeatNo = ''
+			IF (@returnMessage = 'PASS')
+			BEGIN
+				SET  @returnMessage = '<br /> List of deviated Chemicals:'
+				SET @returnHeatNo = ''
+			END
+			ELSE
+				SET @returnMessage = @returnMessage  + '<br /> List of deviated Chemicals:'
 			--  checks if every chemical is within the min/max value from table chemMinMax01
 			-- if it not within value then send the chemical name that is not in limit 
 				
@@ -120,12 +142,12 @@ BEGIN
 				BEGIN
 					SET @charlSi = (SELECT TOP 1 lSi FROM [dbo].[chemMinMax01] WHERE Alloy = @Alloy AND  [Diam]= @Diameter AND TYPE = 'S')									
 					SET @charhSi = (SELECT TOP 1 hSi FROM [dbo].[chemMinMax01] WHERE Alloy = @Alloy AND  [Diam]= @Diameter AND TYPE = 'S')
-					IF ((@charlSi IS NULL) OR (RTRIM(@charlSi) = '') OR (@Status != '3'))
+					IF ((@charlSi IS NULL) OR (RTRIM(@charlSi) = '') )
 						SET @lSi = 0.0
 					ELSE
 						SET @lSi = (SELECT TOP 1 CAST(lSi AS numeric(8,5))FROM [dbo].[chemMinMax01] WHERE Alloy = @Alloy AND  [Diam]= @Diameter AND TYPE = 'S')									
 
-					IF ((@charhSi IS NULL) OR (RTRIM(@charhSi) = '') OR (@Status != '3'))
+					IF ((@charhSi IS NULL) OR (RTRIM(@charhSi) = '') )
 						SET @hSi = 100.0
 					ELSE
 						SET @hSi = (SELECT TOP 1 CAST(hSi AS numeric(8,5))FROM [dbo].[chemMinMax01] WHERE Alloy = @Alloy AND  [Diam]= @Diameter AND TYPE = 'S')
@@ -136,30 +158,30 @@ BEGIN
 					BEGIN
 						SET @Status = '2'
 												
-						IF (@returnMessage = '')
-						BEGIN
-								SET @returnMessage = 'Si'								
-						END
+						--IF (@returnMessage = '')
+						--BEGIN
+						--		SET @returnMessage = 'Si'								
+						--END
 						ELSE
-								SET @returnMessage = @returnMessage + ', ' + 'Si'
+								SET @returnMessage = @returnMessage + '  ' + 'Si'
 					END
-					ELSE
-					BEGIN
-						SET @lSi = 0.0
-						SET @hSi = 100.0
-					END
+					--ELSE
+					--BEGIN
+					--	SET @lSi = 0.0
+					--	SET @hSi = 100.0
+					--END
 				END	
 
 				
-				IF ( @checkSi<=@lSi OR @checkSi>@hSi)	
+				IF ( @checkSi < @lSi OR @checkSi>@hSi)	
 				BEGIN					
 					IF (@Status != '3')
 					BEGIN
 						SET @Status = '2'
-						IF (@returnMessage = '')
-							SET @returnMessage = 'Si'
-						ELSE
-							SET @returnMessage = @returnMessage + ', ' + 'Si'
+						--IF (@returnMessage = '')
+						--	SET @returnMessage = 'Si'
+						--ELSE
+							SET @returnMessage = @returnMessage + '  ' + 'Si'
 					END
 				END
 			END
@@ -182,12 +204,12 @@ BEGIN
 				BEGIN
 					SET @charlFe = (SELECT TOP 1 lFe FROM [dbo].[chemMinMax01] WHERE Alloy = @Alloy AND  [Diam]= @Diameter AND TYPE = 'S')									
 					SET @charhFe = (SELECT TOP 1 hFe FROM [dbo].[chemMinMax01] WHERE Alloy = @Alloy AND  [Diam]= @Diameter AND TYPE = 'S')
-					IF ((@charlFe IS NULL) OR (RTRIM(@charlFe) = '') OR (@Status != '3'))
+					IF ((@charlFe IS NULL) OR (RTRIM(@charlFe) = '') )
 						SET @lFe = 0.0
 					ELSE
 						SET @lFe = (SELECT TOP 1 CAST(lFe AS numeric(8,5))FROM [dbo].[chemMinMax01] WHERE Alloy = @Alloy AND  [Diam]= @Diameter AND TYPE = 'S')									
 
-					IF ((@charhFe IS NULL) OR (RTRIM(@charhFe) = '') OR (@Status != '3'))
+					IF ((@charhFe IS NULL) OR (RTRIM(@charhFe) = '') )
 						SET @hFe = 100.0
 					ELSE
 						SET @hFe = (SELECT TOP 1 CAST(hFe AS numeric(8,5))FROM [dbo].[chemMinMax01] WHERE Alloy = @Alloy AND  [Diam]= @Diameter AND TYPE = 'S')
@@ -197,28 +219,28 @@ BEGIN
 					IF (@Status != '3')
 					BEGIN
 						SET @Status = '2'
-						IF (@returnMessage = '')
-								SET @returnMessage = 'Fe'
-						ELSE
-								SET @returnMessage = @returnMessage + ', ' + 'Fe'
+						--IF (@returnMessage = '')
+						--		SET @returnMessage = 'Fe'
+						--ELSE
+								SET @returnMessage = @returnMessage + '  ' + 'Fe'
 					END
-					ELSE
-					BEGIN
-						SET @lFe = 0.0
-						SET @hFe = 100.0
-					END
+					--ELSE
+					--BEGIN
+					--	SET @lFe = 0.0
+					--	SET @hFe = 100.0
+					--END
 				END	
 
 				
-				IF ( @checkFe<=@lFe OR @checkFe>@hFe)	
+				IF ( @checkFe < @lFe OR @checkFe>@hFe)	
 				BEGIN					
 					IF (@Status != '3')
 					BEGIN
 						SET @Status = '2'
-						IF (@returnMessage = '')
-							SET @returnMessage = 'Fe'
-						ELSE
-							SET @returnMessage = @returnMessage + ', ' + 'Fe'
+						--IF (@returnMessage = '')
+						--	SET @returnMessage = 'Fe'
+						--ELSE
+							SET @returnMessage = @returnMessage + '  ' + 'Fe'
 					END
 				END
 			END
@@ -243,12 +265,14 @@ BEGIN
 				BEGIN
 					SET @charlCu = (SELECT TOP 1 lCu FROM [dbo].[chemMinMax01] WHERE Alloy = @Alloy AND  [Diam]= @Diameter AND TYPE = 'S')									
 					SET @charhCu = (SELECT TOP 1 hCu FROM [dbo].[chemMinMax01] WHERE Alloy = @Alloy AND  [Diam]= @Diameter AND TYPE = 'S')
-					IF ((@charlCu IS NULL) OR (RTRIM(@charlCu) = '') OR (@Status != '3'))
+					--IF ((@charlCu IS NULL) OR (RTRIM(@charlCu) = '') )
+					IF ((@charlCu IS NULL) OR (RTRIM(@charlCu) = '')) 
 						SET @lCu = 0.0
 					ELSE
 						SET @lCu = (SELECT TOP 1 CAST(lCu AS numeric(8,5))FROM [dbo].[chemMinMax01] WHERE Alloy = @Alloy AND  [Diam]= @Diameter AND TYPE = 'S')									
 
-					IF ((@charhCu IS NULL) OR (RTRIM(@charhCu) = '') OR (@Status != '3'))
+					--IF ((@charhCu IS NULL) OR (RTRIM(@charhCu) = '') )
+					IF ((@charhCu IS NULL) OR (RTRIM(@charhCu) = '')) 
 						SET @hCu = 100.0
 					ELSE
 						SET @hCu = (SELECT TOP 1 CAST(hCu AS numeric(8,5))FROM [dbo].[chemMinMax01] WHERE Alloy = @Alloy AND  [Diam]= @Diameter AND TYPE = 'S')
@@ -258,28 +282,28 @@ BEGIN
 					IF (@Status != '3')
 					BEGIN
 						SET @Status = '2'
-						IF (@returnMessage = '')
-								SET @returnMessage = 'Cu'
-						ELSE
-								SET @returnMessage = @returnMessage + ', ' + 'Cu'
+						--IF (@returnMessage = '')
+						--		SET @returnMessage = 'Cu'
+						--ELSE
+								SET @returnMessage = @returnMessage + '  ' + 'Cu'
 					END
-					ELSE
-					BEGIN
-						SET @lCu = 0.0
-						SET @hCu = 100.0
-					END
+					--ELSE
+					--BEGIN
+					--	SET @lCu = 0.0
+					--	SET @hCu = 100.0
+					--END
 				END	
 
 				
-				IF ( @checkCu<=@lCu OR @checkCu>@hCu)	
+				IF ( @checkCu < @lCu OR @checkCu>@hCu)	
 				BEGIN					
 					IF (@Status != '3')
 					BEGIN
 						SET @Status = '2'
-						IF (@returnMessage = '')
-							SET @returnMessage = 'Cu'
-						ELSE
-							SET @returnMessage = @returnMessage + ', ' + 'Cu'
+						--IF (@returnMessage = '')
+						--	SET @returnMessage = 'Cu'
+						--ELSE
+							SET @returnMessage = @returnMessage + '  ' + 'Cu'
 					END
 				END
 			END
@@ -304,12 +328,12 @@ BEGIN
 				BEGIN
 					SET @charlMn = (SELECT TOP 1 lMn FROM [dbo].[chemMinMax01] WHERE Alloy = @Alloy AND  [Diam]= @Diameter AND TYPE = 'S')									
 					SET @charhMn = (SELECT TOP 1 hMn FROM [dbo].[chemMinMax01] WHERE Alloy = @Alloy AND  [Diam]= @Diameter AND TYPE = 'S')
-					IF ((@charlMn IS NULL) OR (RTRIM(@charlMn) = '') OR (@Status != '3'))
+					IF ((@charlMn IS NULL) OR (RTRIM(@charlMn) = '') )
 						SET @lMn = 0.0
 					ELSE
 						SET @lMn = (SELECT TOP 1 CAST(lMn AS numeric(8,5))FROM [dbo].[chemMinMax01] WHERE Alloy = @Alloy AND  [Diam]= @Diameter AND TYPE = 'S')									
 
-					IF ((@charhMn IS NULL) OR (RTRIM(@charhMn) = '') OR (@Status != '3'))
+					IF ((@charhMn IS NULL) OR (RTRIM(@charhMn) = '') )
 						SET @hMn = 100.0
 					ELSE
 						SET @hMn = (SELECT TOP 1 CAST(hMn AS numeric(8,5))FROM [dbo].[chemMinMax01] WHERE Alloy = @Alloy AND  [Diam]= @Diameter AND TYPE = 'S')
@@ -319,28 +343,28 @@ BEGIN
 					IF (@Status != '3')
 					BEGIN
 						SET @Status = '2'
-						IF (@returnMessage = '')
-								SET @returnMessage = 'Mn'
-						ELSE
-								SET @returnMessage = @returnMessage + ', ' + 'Mn'
+						--IF (@returnMessage = '')
+						--		SET @returnMessage = 'Mn'
+						--ELSE
+								SET @returnMessage = @returnMessage + '  ' + 'Mn'
 					END
-					ELSE
-					BEGIN
-						SET @lMn = 0.0
-						SET @hMn = 100.0
-					END
+					--ELSE
+					--BEGIN
+					--	SET @lMn = 0.0
+					--	SET @hMn = 100.0
+					--END
 				END	
 
 				
-				IF ( @checkMn<=@lMn OR @checkMn>@hMn)	
+				IF ( @checkMn < @lMn OR @checkMn>@hMn)	
 				BEGIN					
 					IF (@Status != '3')
 					BEGIN
 						SET @Status = '2'
-						IF (@returnMessage = '')
-							SET @returnMessage = 'Mn'
-						ELSE
-							SET @returnMessage = @returnMessage + ', ' + 'Mn'
+						--IF (@returnMessage = '')
+						--	SET @returnMessage = 'Mn'
+						--ELSE
+							SET @returnMessage = @returnMessage + '  ' + 'Mn'
 					END
 				END
 			END
@@ -365,12 +389,12 @@ BEGIN
 				BEGIN
 					SET @charlMg = (SELECT TOP 1 lMg FROM [dbo].[chemMinMax01] WHERE Alloy = @Alloy AND  [Diam]= @Diameter AND TYPE = 'S')									
 					SET @charhMg = (SELECT TOP 1 hMg FROM [dbo].[chemMinMax01] WHERE Alloy = @Alloy AND  [Diam]= @Diameter AND TYPE = 'S')
-					IF ((@charlMg IS NULL) OR (RTRIM(@charlMg) = '') OR (@Status != '3'))
+					IF ((@charlMg IS NULL) OR (RTRIM(@charlMg) = '') )
 						SET @lMg = 0.0
 					ELSE
 						SET @lMg = (SELECT TOP 1 CAST(lMg AS numeric(8,5))FROM [dbo].[chemMinMax01] WHERE Alloy = @Alloy AND  [Diam]= @Diameter AND TYPE = 'S')									
 
-					IF ((@charhMg IS NULL) OR (RTRIM(@charhMg) = '') OR (@Status != '3'))
+					IF ((@charhMg IS NULL) OR (RTRIM(@charhMg) = '') )
 						SET @hMg = 100.0
 					ELSE
 						SET @hMg = (SELECT TOP 1 CAST(hMg AS numeric(8,5))FROM [dbo].[chemMinMax01] WHERE Alloy = @Alloy AND  [Diam]= @Diameter AND TYPE = 'S')
@@ -380,28 +404,28 @@ BEGIN
 					IF (@Status != '3')
 					BEGIN
 						SET @Status = '2'
-						IF (@returnMessage = '')
-								SET @returnMessage = 'Mg'
-						ELSE
-								SET @returnMessage = @returnMessage + ', ' + 'Mg'
+						--IF (@returnMessage = '')
+						--		SET @returnMessage = 'Mg'
+						--ELSE
+								SET @returnMessage = @returnMessage + '  ' + 'Mg'
 					END
-					ELSE
-					BEGIN
-						SET @lMg = 0.0
-						SET @hMg = 100.0
-					END
+					--ELSE
+					--BEGIN
+					--	SET @lMg = 0.0
+					--	SET @hMg = 100.0
+					--END
 				END	
 
 				
-				IF ( @checkMg<=@lMg OR @checkMg>@hMg)	
+				IF ( @checkMg < @lMg OR @checkMg>@hMg)	
 				BEGIN					
 					IF (@Status != '3')
 					BEGIN
 						SET @Status = '2'
-						IF (@returnMessage = '')
-							SET @returnMessage = 'Mg'
-						ELSE
-							SET @returnMessage = @returnMessage + ', ' + 'Mg'
+						--IF (@returnMessage = '')
+						--	SET @returnMessage = 'Mg'
+						--ELSE
+							SET @returnMessage = @returnMessage + '  ' + 'Mg'
 					END
 				END
 			END
@@ -425,12 +449,12 @@ BEGIN
 				BEGIN
 					SET @charlCr = (SELECT TOP 1 lCr FROM [dbo].[chemMinMax01] WHERE Alloy = @Alloy AND  [Diam]= @Diameter AND TYPE = 'S')									
 					SET @charhCr = (SELECT TOP 1 hCr FROM [dbo].[chemMinMax01] WHERE Alloy = @Alloy AND  [Diam]= @Diameter AND TYPE = 'S')
-					IF ((@charlCr IS NULL) OR (RTRIM(@charlCr) = '') OR (@Status != '3'))
+					IF ((@charlCr IS NULL) OR (RTRIM(@charlCr) = '') )
 						SET @lCr = 0.0
 					ELSE
 						SET @lCr = (SELECT TOP 1 CAST(lCr AS numeric(8,5))FROM [dbo].[chemMinMax01] WHERE Alloy = @Alloy AND  [Diam]= @Diameter AND TYPE = 'S')									
 
-					IF ((@charhCr IS NULL) OR (RTRIM(@charhCr) = '') OR (@Status != '3'))
+					IF ((@charhCr IS NULL) OR (RTRIM(@charhCr) = '') )
 						SET @hCr = 100.0
 					ELSE
 						SET @hCr = (SELECT TOP 1 CAST(hCr AS numeric(8,5))FROM [dbo].[chemMinMax01] WHERE Alloy = @Alloy AND  [Diam]= @Diameter AND TYPE = 'S')
@@ -440,28 +464,28 @@ BEGIN
 					IF (@Status != '3')
 					BEGIN
 						SET @Status = '2'
-						IF (@returnMessage = '')
-								SET @returnMessage = 'Cr'
-						ELSE
-								SET @returnMessage = @returnMessage + ', ' + 'Cr'
+						--IF (@returnMessage = '')
+						--		SET @returnMessage = 'Cr'
+						--ELSE
+								SET @returnMessage = @returnMessage + '  ' + 'Cr'
 					END
-					ELSE
-					BEGIN
-						SET @lCr = 0.0
-						SET @hCr = 100.0
-					END
+					--ELSE
+					--BEGIN
+					--	SET @lCr = 0.0
+					--	SET @hCr = 100.0
+					--END
 				END	
 
 				
-				IF ( @checkCr<=@lCr OR @checkCr>@hCr)	
+				IF ( @checkCr < @lCr OR @checkCr>@hCr)	
 				BEGIN					
 					IF (@Status != '3')
 					BEGIN
 						SET @Status = '2'
-						IF (@returnMessage = '')
-							SET @returnMessage = 'Cr'
-						ELSE
-							SET @returnMessage = @returnMessage + ', ' + 'Cr'
+						--IF (@returnMessage = '')
+						--	SET @returnMessage = 'Cr'
+						--ELSE
+							SET @returnMessage = @returnMessage + '  ' + 'Cr'
 					END
 				END
 			END
@@ -487,12 +511,12 @@ BEGIN
 				BEGIN
 					SET @charlNi = (SELECT TOP 1 lNi FROM [dbo].[chemMinMax01] WHERE Alloy = @Alloy AND  [Diam]= @Diameter AND TYPE = 'S')									
 					SET @charhNi = (SELECT TOP 1 hNi FROM [dbo].[chemMinMax01] WHERE Alloy = @Alloy AND  [Diam]= @Diameter AND TYPE = 'S')
-					IF ((@charlNi IS NULL) OR (RTRIM(@charlNi) = '') OR (@Status != '3'))
+					IF ((@charlNi IS NULL) OR (RTRIM(@charlNi) = '') )
 						SET @lNi = 0.0
 					ELSE
 						SET @lNi = (SELECT TOP 1 CAST(lNi AS numeric(8,5))FROM [dbo].[chemMinMax01] WHERE Alloy = @Alloy AND  [Diam]= @Diameter AND TYPE = 'S')									
 
-					IF ((@charhNi IS NULL) OR (RTRIM(@charhNi) = '') OR (@Status != '3'))
+					IF ((@charhNi IS NULL) OR (RTRIM(@charhNi) = '') )
 						SET @hNi = 100.0
 					ELSE
 						SET @hNi = (SELECT TOP 1 CAST(hNi AS numeric(8,5))FROM [dbo].[chemMinMax01] WHERE Alloy = @Alloy AND  [Diam]= @Diameter AND TYPE = 'S')
@@ -502,28 +526,28 @@ BEGIN
 					IF (@Status != '3')
 					BEGIN
 						SET @Status = '2'
-						IF (@returnMessage = '')
-								SET @returnMessage = 'Ni'
-						ELSE
-								SET @returnMessage = @returnMessage + ', ' + 'Ni'
+						--IF (@returnMessage = '')
+						--		SET @returnMessage = 'Ni'
+						--ELSE
+								SET @returnMessage = @returnMessage + '  ' + 'Ni'
 					END
-					ELSE
-					BEGIN
-						SET @lNi = 0.0
-						SET @hNi = 100.0
-					END
+					--ELSE
+					--BEGIN
+					--	SET @lNi = 0.0
+					--	SET @hNi = 100.0
+					--END
 				END	
 
 				
-				IF ( @checkNi<=@lNi OR @checkNi>@hNi)	
+				IF ( @checkNi < @lNi OR @checkNi>@hNi)	
 				BEGIN					
 					IF (@Status != '3')
 					BEGIN
 						SET @Status = '2'
-						IF (@returnMessage = '')
-							SET @returnMessage = 'Ni'
-						ELSE
-							SET @returnMessage = @returnMessage + ', ' + 'Ni'
+						--IF (@returnMessage = '')
+						--	SET @returnMessage = 'Ni'
+						--ELSE
+							SET @returnMessage = @returnMessage + '  ' + 'Ni'
 					END
 				END
 			END
@@ -548,12 +572,12 @@ BEGIN
 				BEGIN
 					SET @charlZn = (SELECT TOP 1 lZn FROM [dbo].[chemMinMax01] WHERE Alloy = @Alloy AND  [Diam]= @Diameter AND TYPE = 'S')									
 					SET @charhZn = (SELECT TOP 1 hZn FROM [dbo].[chemMinMax01] WHERE Alloy = @Alloy AND  [Diam]= @Diameter AND TYPE = 'S')
-					IF ((@charlZn IS NULL) OR (RTRIM(@charlZn) = '') OR (@Status != '3'))
+					IF ((@charlZn IS NULL) OR (RTRIM(@charlZn) = '') )
 						SET @lZn = 0.0
 					ELSE
 						SET @lZn = (SELECT TOP 1 CAST(lZn AS numeric(8,5))FROM [dbo].[chemMinMax01] WHERE Alloy = @Alloy AND  [Diam]= @Diameter AND TYPE = 'S')									
 
-					IF ((@charhZn IS NULL) OR (RTRIM(@charhZn) = '') OR (@Status != '3'))
+					IF ((@charhZn IS NULL) OR (RTRIM(@charhZn) = '') )
 						SET @hZn = 100.0
 					ELSE
 						SET @hZn = (SELECT TOP 1 CAST(hZn AS numeric(8,5))FROM [dbo].[chemMinMax01] WHERE Alloy = @Alloy AND  [Diam]= @Diameter AND TYPE = 'S')
@@ -563,28 +587,28 @@ BEGIN
 					IF (@Status != '3')
 					BEGIN
 						SET @Status = '2'
-						IF (@returnMessage = '')
-								SET @returnMessage = 'Zn'
-						ELSE
-								SET @returnMessage = @returnMessage + ', ' + 'Zn'
+						--IF (@returnMessage = '')
+						--		SET @returnMessage = 'Zn'
+						--ELSE
+								SET @returnMessage = @returnMessage + '  ' + 'Zn'
 					END
-					ELSE
-					BEGIN
-						SET @lZn = 0.0
-						SET @hZn = 100.0
-					END
+					--ELSE
+					--BEGIN
+					--	SET @lZn = 0.0
+					--	SET @hZn = 100.0
+					--END
 				END	
 
 				
-				IF ( @checkZn<=@lZn OR @checkZn>@hZn)	
+				IF ( @checkZn < @lZn OR @checkZn>@hZn)	
 				BEGIN					
 					IF (@Status != '3')
 					BEGIN
 						SET @Status = '2'
-						IF (@returnMessage = '')
-							SET @returnMessage = 'Zn'
-						ELSE
-							SET @returnMessage = @returnMessage + ', ' + 'Zn'
+						--IF (@returnMessage = '')
+						--	SET @returnMessage = 'Zn'
+						--ELSE
+							SET @returnMessage = @returnMessage + '  ' + 'Zn'
 					END
 				END
 			END
@@ -610,12 +634,12 @@ BEGIN
 				BEGIN
 					SET @charlTi = (SELECT TOP 1 lTi FROM [dbo].[chemMinMax01] WHERE Alloy = @Alloy AND  [Diam]= @Diameter AND TYPE = 'S')									
 					SET @charhTi = (SELECT TOP 1 hTi FROM [dbo].[chemMinMax01] WHERE Alloy = @Alloy AND  [Diam]= @Diameter AND TYPE = 'S')
-					IF ((@charlTi IS NULL) OR (RTRIM(@charlTi) = '') OR (@Status != '3'))
+					IF ((@charlTi IS NULL) OR (RTRIM(@charlTi) = '') )
 						SET @lTi = 0.0
 					ELSE
 						SET @lTi = (SELECT TOP 1 CAST(lTi AS numeric(8,5))FROM [dbo].[chemMinMax01] WHERE Alloy = @Alloy AND  [Diam]= @Diameter AND TYPE = 'S')									
 
-					IF ((@charhTi IS NULL) OR (RTRIM(@charhTi) = '') OR (@Status != '3'))
+					IF ((@charhTi IS NULL) OR (RTRIM(@charhTi) = '') )
 						SET @hTi = 100.0
 					ELSE
 						SET @hTi = (SELECT TOP 1 CAST(hTi AS numeric(8,5))FROM [dbo].[chemMinMax01] WHERE Alloy = @Alloy AND  [Diam]= @Diameter AND TYPE = 'S')
@@ -625,28 +649,28 @@ BEGIN
 					IF (@Status != '3')
 					BEGIN
 						SET @Status = '2'
-						IF (@returnMessage = '')
-								SET @returnMessage = 'Ti'
-						ELSE
-								SET @returnMessage = @returnMessage + ', ' + 'Ti'
+						--IF (@returnMessage = '')
+						--		SET @returnMessage = 'Ti'
+						--ELSE
+								SET @returnMessage = @returnMessage + '  ' + 'Ti'
 					END
-					ELSE
-					BEGIN
-						SET @lTi = 0.0
-						SET @hTi = 100.0
-					END
+					--ELSE
+					--BEGIN
+					--	SET @lTi = 0.0
+					--	SET @hTi = 100.0
+					--END
 				END	
 
 				
-				IF ( @checkTi<=@lTi OR @checkTi>@hTi)	
+				IF ( @checkTi < @lTi OR @checkTi>@hTi)	
 				BEGIN					
 					IF (@Status != '3')
 					BEGIN
 						SET @Status = '2'
-						IF (@returnMessage = '')
-							SET @returnMessage = 'Ti'
-						ELSE
-							SET @returnMessage = @returnMessage + ', ' + 'Ti'
+						--IF (@returnMessage = '')
+						--	SET @returnMessage = 'Ti'
+						--ELSE
+							SET @returnMessage = @returnMessage + '  ' + 'Ti'
 					END
 				END
 			END
@@ -671,12 +695,12 @@ BEGIN
 				BEGIN
 					SET @charlV = (SELECT TOP 1 lV FROM [dbo].[chemMinMax01] WHERE Alloy = @Alloy AND  [Diam]= @Diameter AND TYPE = 'S')									
 					SET @charhV = (SELECT TOP 1 hV FROM [dbo].[chemMinMax01] WHERE Alloy = @Alloy AND  [Diam]= @Diameter AND TYPE = 'S')
-					IF ((@charlV IS NULL) OR (RTRIM(@charlV) = '') OR (@Status != '3'))
+					IF ((@charlV IS NULL) OR (RTRIM(@charlV) = '') )
 						SET @lV = 0.0
 					ELSE
 						SET @lV = (SELECT TOP 1 CAST(lV AS numeric(8,5))FROM [dbo].[chemMinMax01] WHERE Alloy = @Alloy AND  [Diam]= @Diameter AND TYPE = 'S')									
 
-					IF ((@charhV IS NULL) OR (RTRIM(@charhV) = '') OR (@Status != '3'))
+					IF ((@charhV IS NULL) OR (RTRIM(@charhV) = '') )
 						SET @hV = 100.0
 					ELSE
 						SET @hV = (SELECT TOP 1 CAST(hV AS numeric(8,5))FROM [dbo].[chemMinMax01] WHERE Alloy = @Alloy AND  [Diam]= @Diameter AND TYPE = 'S')
@@ -685,29 +709,29 @@ BEGIN
 				BEGIN
 					IF (@Status != '3')
 					BEGIN
-						SET @Status = '2'
-						IF (@returnMessage = '')
-								SET @returnMessage = 'V'
-						ELSE
-								SET @returnMessage = @returnMessage + ', ' + 'V'
+						--SET @Status = '2'
+						--IF (@returnMessage = '')
+						--		SET @returnMessage = 'V'
+						--ELSE
+								SET @returnMessage = @returnMessage + '  ' + 'V'
 					END
-					ELSE
-					BEGIN
-						SET @lV = 0.0
-						SET @hV = 100.0
-					END
+					--ELSE
+					--BEGIN
+					--	SET @lV = 0.0
+					--	SET @hV = 100.0
+					--END
 				END	
 
 				
-				IF ( @checkV<=@lV OR @checkV>@hV)	
+				IF ( @checkV < @lV OR @checkV>@hV)	
 				BEGIN					
 					IF (@Status != '3')
 					BEGIN
 						SET @Status = '2'
-						IF (@returnMessage = '')
-							SET @returnMessage = 'V'
-						ELSE
-							SET @returnMessage = @returnMessage + ', ' + 'V'
+						--IF (@returnMessage = '')
+						--	SET @returnMessage = 'V'
+						--ELSE
+							SET @returnMessage = @returnMessage + '  ' + 'V'
 					END
 				END
 			END
@@ -731,12 +755,12 @@ BEGIN
 				BEGIN
 					SET @charlPb = (SELECT TOP 1 lPb FROM [dbo].[chemMinMax01] WHERE Alloy = @Alloy AND  [Diam]= @Diameter AND TYPE = 'S')									
 					SET @charhPb = (SELECT TOP 1 hPb FROM [dbo].[chemMinMax01] WHERE Alloy = @Alloy AND  [Diam]= @Diameter AND TYPE = 'S')
-					IF ((@charlPb IS NULL) OR (RTRIM(@charlPb) = '') OR (@Status != '3'))
+					IF ((@charlPb IS NULL) OR (RTRIM(@charlPb) = '') )
 						SET @lPb = 0.0
 					ELSE
 						SET @lPb = (SELECT TOP 1 CAST(lPb AS numeric(8,5))FROM [dbo].[chemMinMax01] WHERE Alloy = @Alloy AND  [Diam]= @Diameter AND TYPE = 'S')									
 
-					IF ((@charhPb IS NULL) OR (RTRIM(@charhPb) = '') OR (@Status != '3'))
+					IF ((@charhPb IS NULL) OR (RTRIM(@charhPb) = '') )
 						SET @hPb = 100.0
 					ELSE
 						SET @hPb = (SELECT TOP 1 CAST(hPb AS numeric(8,5))FROM [dbo].[chemMinMax01] WHERE Alloy = @Alloy AND  [Diam]= @Diameter AND TYPE = 'S')
@@ -746,28 +770,28 @@ BEGIN
 					IF (@Status != '3')
 					BEGIN
 						SET @Status = '2'
-						IF (@returnMessage = '')
-								SET @returnMessage = 'Pb'
-						ELSE
-								SET @returnMessage = @returnMessage + ', ' + 'Pb'
+						--IF (@returnMessage = '')
+						--		SET @returnMessage = 'Pb'
+						--ELSE
+								SET @returnMessage = @returnMessage + '  ' + 'Pb'
 					END
-					ELSE
-					BEGIN
-						SET @lPb = 0.0
-						SET @hPb = 100.0
-					END
+					--ELSE
+					--BEGIN
+					--	SET @lPb = 0.0
+					--	SET @hPb = 100.0
+					--END
 				END	
 
 				
-				IF ( @checkPb<=@lPb OR @checkPb>@hPb)	
+				IF ( @checkPb < @lPb OR @checkPb>@hPb)	
 				BEGIN					
 					IF (@Status != '3')
 					BEGIN
 						SET @Status = '2'
-						IF (@returnMessage = '')
-							SET @returnMessage = 'Pb'
-						ELSE
-							SET @returnMessage = @returnMessage + ', ' + 'Pb'
+						--IF (@returnMessage = '')
+						--	SET @returnMessage = 'Pb'
+						--ELSE
+							SET @returnMessage = @returnMessage + '  ' + 'Pb'
 					END
 				END
 			END
@@ -791,12 +815,12 @@ BEGIN
 				BEGIN
 					SET @charlB = (SELECT TOP 1 lB FROM [dbo].[chemMinMax01] WHERE Alloy = @Alloy AND  [Diam]= @Diameter AND TYPE = 'S')									
 					SET @charhB = (SELECT TOP 1 hB FROM [dbo].[chemMinMax01] WHERE Alloy = @Alloy AND  [Diam]= @Diameter AND TYPE = 'S')
-					IF ((@charlB IS NULL) OR (RTRIM(@charlB) = '') OR (@Status != '3'))
+					IF ((@charlB IS NULL) OR (RTRIM(@charlB) = '') )
 						SET @lB = 0.0
 					ELSE
 						SET @lB = (SELECT TOP 1 CAST(lB AS numeric(8,5))FROM [dbo].[chemMinMax01] WHERE Alloy = @Alloy AND  [Diam]= @Diameter AND TYPE = 'S')									
 
-					IF ((@charhB IS NULL) OR (RTRIM(@charhB) = '') OR (@Status != '3'))
+					IF ((@charhB IS NULL) OR (RTRIM(@charhB) = '') )
 						SET @hB = 100.0
 					ELSE
 						SET @hB = (SELECT TOP 1 CAST(hB AS numeric(8,5))FROM [dbo].[chemMinMax01] WHERE Alloy = @Alloy AND  [Diam]= @Diameter AND TYPE = 'S')
@@ -806,28 +830,28 @@ BEGIN
 					IF (@Status != '3')
 					BEGIN
 						SET @Status = '2'
-						IF (@returnMessage = '')
-								SET @returnMessage = 'B'
-						ELSE
-								SET @returnMessage = @returnMessage + ', ' + 'B'
+						--IF (@returnMessage = '')
+						--		SET @returnMessage = 'B'
+						--ELSE
+								SET @returnMessage = @returnMessage + '  ' + 'B'
 					END
-					ELSE
-					BEGIN
-						SET @lB = 0.0
-						SET @hB = 100.0
-					END
+					--ELSE
+					--BEGIN
+					--	SET @lB = 0.0
+					--	SET @hB = 100.0
+					--END
 				END	
 
 				
-				IF ( @checkB<=@lB OR @checkB>@hB)	
+				IF ( @checkB < @lB OR @checkB>@hB)	
 				BEGIN					
 					IF (@Status != '3')
 					BEGIN
 						SET @Status = '2'
-						IF (@returnMessage = '')
-							SET @returnMessage = 'B'
-						ELSE
-							SET @returnMessage = @returnMessage + ', ' + 'B'
+						--IF (@returnMessage = '')
+						--	SET @returnMessage = 'B'
+						--ELSE
+							SET @returnMessage = @returnMessage + '  ' + 'B'
 					END
 				END
 			END
@@ -851,12 +875,12 @@ BEGIN
 				BEGIN
 					SET @charlBe = (SELECT TOP 1 lBe FROM [dbo].[chemMinMax01] WHERE Alloy = @Alloy AND  [Diam]= @Diameter AND TYPE = 'S')									
 					SET @charhBe = (SELECT TOP 1 hBe FROM [dbo].[chemMinMax01] WHERE Alloy = @Alloy AND  [Diam]= @Diameter AND TYPE = 'S')
-					IF ((@charlBe IS NULL) OR (RTRIM(@charlBe) = '') OR (@Status != '3'))
+					IF ((@charlBe IS NULL) OR (RTRIM(@charlBe) = '') )
 						SET @lBe = 0.0
 					ELSE
 						SET @lBe = (SELECT TOP 1 CAST(lBe AS numeric(8,5))FROM [dbo].[chemMinMax01] WHERE Alloy = @Alloy AND  [Diam]= @Diameter AND TYPE = 'S')									
 
-					IF ((@charhBe IS NULL) OR (RTRIM(@charhBe) = '') OR (@Status != '3'))
+					IF ((@charhBe IS NULL) OR (RTRIM(@charhBe) = '') )
 						SET @hBe = 100.0
 					ELSE
 						SET @hBe = (SELECT TOP 1 CAST(hBe AS numeric(8,5))FROM [dbo].[chemMinMax01] WHERE Alloy = @Alloy AND  [Diam]= @Diameter AND TYPE = 'S')
@@ -866,28 +890,28 @@ BEGIN
 					IF (@Status != '3')
 					BEGIN
 						SET @Status = '2'
-						IF (@returnMessage = '')
-								SET @returnMessage = 'Be'
-						ELSE
-								SET @returnMessage = @returnMessage + ', ' + 'Be'
+						--IF (@returnMessage = '')
+						--		SET @returnMessage = 'Be'
+						--ELSE
+								SET @returnMessage = @returnMessage + '  ' + 'Be'
 					END
-					ELSE
-					BEGIN
-						SET @lBe = 0.0
-						SET @hBe = 100.0
-					END
+					--ELSE
+					--BEGIN
+					--	SET @lBe = 0.0
+					--	SET @hBe = 100.0
+					--END
 				END	
 
 				
-				IF ( @checkBe<=@lBe OR @checkBe>@hBe)	
+				IF ( @checkBe < @lBe OR @checkBe>@hBe)	
 				BEGIN					
 					IF (@Status != '3')
 					BEGIN
 						SET @Status = '2'
-						IF (@returnMessage = '')
-							SET @returnMessage = 'Be'
-						ELSE
-							SET @returnMessage = @returnMessage + ', ' + 'Be'
+						--IF (@returnMessage = '')
+						--	SET @returnMessage = 'Be'
+						--ELSE
+							SET @returnMessage = @returnMessage + '  ' + 'Be'
 					END
 				END
 			END			--end			
@@ -911,12 +935,12 @@ BEGIN
 				BEGIN
 					SET @charlNa = (SELECT TOP 1 lNa FROM [dbo].[chemMinMax01] WHERE Alloy = @Alloy AND  [Diam]= @Diameter AND TYPE = 'S')									
 					SET @charhNa = (SELECT TOP 1 hNa FROM [dbo].[chemMinMax01] WHERE Alloy = @Alloy AND  [Diam]= @Diameter AND TYPE = 'S')
-					IF ((@charlNa IS NULL) OR (RTRIM(@charlNa) = '') OR (@Status != '3'))
+					IF ((@charlNa IS NULL) OR (RTRIM(@charlNa) = '') )
 						SET @lNa = 0.0
 					ELSE
 						SET @lNa = (SELECT TOP 1 CAST(lNa AS numeric(8,5))FROM [dbo].[chemMinMax01] WHERE Alloy = @Alloy AND  [Diam]= @Diameter AND TYPE = 'S')									
 
-					IF ((@charhNa IS NULL) OR (RTRIM(@charhNa) = '') OR (@Status != '3'))
+					IF ((@charhNa IS NULL) OR (RTRIM(@charhNa) = '') )
 						SET @hNa = 100.0
 					ELSE
 						SET @hNa = (SELECT TOP 1 CAST(hNa AS numeric(8,5))FROM [dbo].[chemMinMax01] WHERE Alloy = @Alloy AND  [Diam]= @Diameter AND TYPE = 'S')
@@ -926,28 +950,28 @@ BEGIN
 					IF (@Status != '3')
 					BEGIN
 						SET @Status = '2'
-						IF (@returnMessage = '')
-								SET @returnMessage = 'Na'
-						ELSE
-								SET @returnMessage = @returnMessage + ', ' + 'Na'
+						--IF (@returnMessage = '')
+						--		SET @returnMessage = 'Na'
+						--ELSE
+								SET @returnMessage = @returnMessage + '  ' + 'Na'
 					END
-					ELSE
-					BEGIN
-						SET @lNa = 0.0
-						SET @hNa = 100.0
-					END
+					--ELSE
+					--BEGIN
+					--	SET @lNa = 0.0
+					--	SET @hNa = 100.0
+					--END
 				END	
 
 				
-				IF ( @checkNa<=@lNa OR @checkNa>@hNa)	
+				IF ( @checkNa < @lNa OR @checkNa>@hNa)	
 				BEGIN					
 					IF (@Status != '3')
 					BEGIN
 						SET @Status = '2'
-						IF (@returnMessage = '')
-							SET @returnMessage = 'Na'
-						ELSE
-							SET @returnMessage = @returnMessage + ', ' + 'Na'
+						--IF (@returnMessage = '')
+						--	SET @returnMessage = 'Na'
+						--ELSE
+							SET @returnMessage = @returnMessage + '  ' + 'Na'
 					END
 				END
 			END
@@ -972,12 +996,12 @@ BEGIN
 				BEGIN
 					SET @charlCa = (SELECT TOP 1 lCa FROM [dbo].[chemMinMax01] WHERE Alloy = @Alloy AND  [Diam]= @Diameter AND TYPE = 'S')									
 					SET @charhCa = (SELECT TOP 1 hCa FROM [dbo].[chemMinMax01] WHERE Alloy = @Alloy AND  [Diam]= @Diameter AND TYPE = 'S')
-					IF ((@charlCa IS NULL) OR (RTRIM(@charlCa) = '') OR (@Status != '3'))
+					IF ((@charlCa IS NULL) OR (RTRIM(@charlCa) = '') )
 						SET @lCa = 0.0
 					ELSE
 						SET @lCa = (SELECT TOP 1 CAST(lCa AS numeric(8,5))FROM [dbo].[chemMinMax01] WHERE Alloy = @Alloy AND  [Diam]= @Diameter AND TYPE = 'S')									
 
-					IF ((@charhCa IS NULL) OR (RTRIM(@charhCa) = '') OR (@Status != '3'))
+					IF ((@charhCa IS NULL) OR (RTRIM(@charhCa) = '') )
 						SET @hCa = 100.0
 					ELSE
 						SET @hCa = (SELECT TOP 1 CAST(hCa AS numeric(8,5))FROM [dbo].[chemMinMax01] WHERE Alloy = @Alloy AND  [Diam]= @Diameter AND TYPE = 'S')
@@ -987,28 +1011,28 @@ BEGIN
 					IF (@Status != '3')
 					BEGIN
 						SET @Status = '2'
-						IF (@returnMessage = '')
-								SET @returnMessage = 'Ca'
-						ELSE
-								SET @returnMessage = @returnMessage + ', ' + 'Ca'
+						--IF (@returnMessage = '')
+						--		SET @returnMessage = 'Ca'
+						--ELSE
+								SET @returnMessage = @returnMessage + '  ' + 'Ca'
 					END
-					ELSE
-					BEGIN
-						SET @lCa = 0.0
-						SET @hCa = 100.0
-					END
+					--ELSE
+					--BEGIN
+					--	SET @lCa = 0.0
+					--	SET @hCa = 100.0
+					--END
 				END	
 
 				
-				IF ( @checkCa<=@lCa OR @checkCa>@hCa)	
+				IF ( @checkCa < @lCa OR @checkCa>@hCa)	
 				BEGIN					
 					IF (@Status != '3')
 					BEGIN
 						SET @Status = '2'
-						IF (@returnMessage = '')
-							SET @returnMessage = 'Ca'
-						ELSE
-							SET @returnMessage = @returnMessage + ', ' + 'Ca'
+						--IF (@returnMessage = '')
+						--	SET @returnMessage = 'Ca'
+						--ELSE
+							SET @returnMessage = @returnMessage + '  ' + 'Ca'
 					END
 				END
 			END
@@ -1033,12 +1057,12 @@ BEGIN
 				BEGIN
 					SET @charlBi = (SELECT TOP 1 lBi FROM [dbo].[chemMinMax01] WHERE Alloy = @Alloy AND  [Diam]= @Diameter AND TYPE = 'S')									
 					SET @charhBi = (SELECT TOP 1 hBi FROM [dbo].[chemMinMax01] WHERE Alloy = @Alloy AND  [Diam]= @Diameter AND TYPE = 'S')
-					IF ((@charlBi IS NULL) OR (RTRIM(@charlBi) = '') OR (@Status != '3'))
+					IF ((@charlBi IS NULL) OR (RTRIM(@charlBi) = '') )
 						SET @lBi = 0.0
 					ELSE
 						SET @lBi = (SELECT TOP 1 CAST(lBi AS numeric(8,5))FROM [dbo].[chemMinMax01] WHERE Alloy = @Alloy AND  [Diam]= @Diameter AND TYPE = 'S')									
 
-					IF ((@charhBi IS NULL) OR (RTRIM(@charhBi) = '') OR (@Status != '3'))
+					IF ((@charhBi IS NULL) OR (RTRIM(@charhBi) = '') )
 						SET @hBi = 100.0
 					ELSE
 						SET @hBi = (SELECT TOP 1 CAST(hBi AS numeric(8,5))FROM [dbo].[chemMinMax01] WHERE Alloy = @Alloy AND  [Diam]= @Diameter AND TYPE = 'S')
@@ -1048,28 +1072,28 @@ BEGIN
 					IF (@Status != '3')
 					BEGIN
 						SET @Status = '2'
-						IF (@returnMessage = '')
-								SET @returnMessage = 'Bi'
-						ELSE
-								SET @returnMessage = @returnMessage + ', ' + 'Bi'
+						--IF (@returnMessage = '')
+						--		SET @returnMessage = 'Bi'
+						--ELSE
+								SET @returnMessage = @returnMessage + '  ' + 'Bi'
 					END
-					ELSE
-					BEGIN
-						SET @lBi = 0.0
-						SET @hBi = 100.0
-					END
+					--ELSE
+					--BEGIN
+					--	SET @lBi = 0.0
+					--	SET @hBi = 100.0
+					--END
 				END	
 
 				
-				IF ( @checkBi<=@lBi OR @checkBi>@hBi)	
+				IF ( @checkBi < @lBi OR @checkBi>@hBi)	
 				BEGIN					
 					IF (@Status != '3')
 					BEGIN
 						SET @Status = '2'
-						IF (@returnMessage = '')
-							SET @returnMessage = 'Bi'
-						ELSE
-							SET @returnMessage = @returnMessage + ', ' + 'Bi'
+						--IF (@returnMessage = '')
+						--	SET @returnMessage = 'Bi'
+						--ELSE
+							SET @returnMessage = @returnMessage + '  ' + 'Bi'
 					END
 				END
 			END			--end			
@@ -1093,12 +1117,12 @@ BEGIN
 				BEGIN
 					SET @charlZr = (SELECT TOP 1 lZr FROM [dbo].[chemMinMax01] WHERE Alloy = @Alloy AND  [Diam]= @Diameter AND TYPE = 'S')									
 					SET @charhZr = (SELECT TOP 1 hZr FROM [dbo].[chemMinMax01] WHERE Alloy = @Alloy AND  [Diam]= @Diameter AND TYPE = 'S')
-					IF ((@charlZr IS NULL) OR (RTRIM(@charlZr) = '') OR (@Status != '3'))
+					IF ((@charlZr IS NULL) OR (RTRIM(@charlZr) = '') )
 						SET @lZr = 0.0
 					ELSE
 						SET @lZr = (SELECT TOP 1 CAST(lZr AS numeric(8,5))FROM [dbo].[chemMinMax01] WHERE Alloy = @Alloy AND  [Diam]= @Diameter AND TYPE = 'S')									
 
-					IF ((@charhZr IS NULL) OR (RTRIM(@charhZr) = '') OR (@Status != '3'))
+					IF ((@charhZr IS NULL) OR (RTRIM(@charhZr) = '') )
 						SET @hZr = 100.0
 					ELSE
 						SET @hZr = (SELECT TOP 1 CAST(hZr AS numeric(8,5))FROM [dbo].[chemMinMax01] WHERE Alloy = @Alloy AND  [Diam]= @Diameter AND TYPE = 'S')
@@ -1108,28 +1132,28 @@ BEGIN
 					IF (@Status != '3')
 					BEGIN
 						SET @Status = '2'
-						IF (@returnMessage = '')
-								SET @returnMessage = 'Zr'
-						ELSE
-								SET @returnMessage = @returnMessage + ', ' + 'Zr'
+						--IF (@returnMessage = '')
+						--		SET @returnMessage = 'Zr'
+						--ELSE
+								SET @returnMessage = @returnMessage + '  ' + 'Zr'
 					END
-					ELSE
-					BEGIN
-						SET @lZr = 0.0
-						SET @hZr = 100.0
-					END
+					--ELSE
+					--BEGIN
+					--	SET @lZr = 0.0
+					--	SET @hZr = 100.0
+					--END
 				END	
 
 				
-				IF ( @checkZr<=@lZr OR @checkZr>@hZr)	
+				IF ( @checkZr < @lZr OR @checkZr>@hZr)	
 				BEGIN					
 					IF (@Status != '3')
 					BEGIN
 						SET @Status = '2'
-						IF (@returnMessage = '')
-							SET @returnMessage = 'Zr'
-						ELSE
-							SET @returnMessage = @returnMessage + ', ' + 'Zr'
+						--IF (@returnMessage = '')
+						--	SET @returnMessage = 'Zr'
+						--ELSE
+							SET @returnMessage = @returnMessage + '  ' + 'Zr'
 					END
 				END
 			END			--end			
@@ -1153,12 +1177,12 @@ BEGIN
 				BEGIN
 					SET @charlLi = (SELECT TOP 1 lLi FROM [dbo].[chemMinMax01] WHERE Alloy = @Alloy AND  [Diam]= @Diameter AND TYPE = 'S')									
 					SET @charhLi = (SELECT TOP 1 hLi FROM [dbo].[chemMinMax01] WHERE Alloy = @Alloy AND  [Diam]= @Diameter AND TYPE = 'S')
-					IF ((@charlLi IS NULL) OR (RTRIM(@charlLi) = '') OR (@Status != '3'))
+					IF ((@charlLi IS NULL) OR (RTRIM(@charlLi) = '') )
 						SET @lLi = 0.0
 					ELSE
 						SET @lLi = (SELECT TOP 1 CAST(lLi AS numeric(8,5))FROM [dbo].[chemMinMax01] WHERE Alloy = @Alloy AND  [Diam]= @Diameter AND TYPE = 'S')									
 
-					IF ((@charhLi IS NULL) OR (RTRIM(@charhLi) = '') OR (@Status != '3'))
+					IF ((@charhLi IS NULL) OR (RTRIM(@charhLi) = '') )
 						SET @hLi = 100.0
 					ELSE
 						SET @hLi = (SELECT TOP 1 CAST(hLi AS numeric(8,5))FROM [dbo].[chemMinMax01] WHERE Alloy = @Alloy AND  [Diam]= @Diameter AND TYPE = 'S')
@@ -1168,20 +1192,20 @@ BEGIN
 					IF (@Status != '3')
 					BEGIN
 						SET @Status = '2'
-						IF (@returnMessage = '')
-								SET @returnMessage = 'Li'
-						ELSE
-								SET @returnMessage = @returnMessage + ', ' + 'Li'
+						--IF (@returnMessage = '')
+						--		SET @returnMessage = 'Li'
+						--ELSE
+								SET @returnMessage = @returnMessage + '  ' + 'Li'
 					END
-					ELSE
-					BEGIN
-						SET @lLi = 0.0
-						SET @hLi = 100.0
-					END
+					--ELSE
+					--BEGIN
+					--	SET @lLi = 0.0
+					--	SET @hLi = 100.0
+					--END
 				END	
 
 				
-				IF ( @checkLi<=@lLi OR @checkLi>@hLi)	
+				IF ( @checkLi < @lLi OR @checkLi>@hLi)	
 				BEGIN					
 					IF (@Status != '3')
 					BEGIN
@@ -1189,7 +1213,7 @@ BEGIN
 						IF (@returnMessage = '')
 							SET @returnMessage = 'Li'
 						ELSE
-							SET @returnMessage = @returnMessage + ', ' + 'Li'
+							SET @returnMessage = @returnMessage + '  ' + 'Li'
 					END
 				END
 			END			--end	
@@ -1213,12 +1237,12 @@ BEGIN
 				BEGIN
 					SET @charlAg = (SELECT TOP 1 lAg FROM [dbo].[chemMinMax01] WHERE Alloy = @Alloy AND  [Diam]= @Diameter AND TYPE = 'S')									
 					SET @charhAg = (SELECT TOP 1 hAg FROM [dbo].[chemMinMax01] WHERE Alloy = @Alloy AND  [Diam]= @Diameter AND TYPE = 'S')
-					IF ((@charlAg IS NULL) OR (RTRIM(@charlAg) = '') OR (@Status != '3'))
+					IF ((@charlAg IS NULL) OR (RTRIM(@charlAg) = '') )
 						SET @lAg = 0.0
 					ELSE
 						SET @lAg = (SELECT TOP 1 CAST(lAg AS numeric(8,5))FROM [dbo].[chemMinMax01] WHERE Alloy = @Alloy AND  [Diam]= @Diameter AND TYPE = 'S')									
 
-					IF ((@charhAg IS NULL) OR (RTRIM(@charhAg) = '') OR (@Status != '3'))
+					IF ((@charhAg IS NULL) OR (RTRIM(@charhAg) = '') )
 						SET @hAg = 100.0
 					ELSE
 						SET @hAg = (SELECT TOP 1 CAST(hAg AS numeric(8,5))FROM [dbo].[chemMinMax01] WHERE Alloy = @Alloy AND  [Diam]= @Diameter AND TYPE = 'S')
@@ -1228,28 +1252,28 @@ BEGIN
 					IF (@Status != '3')
 					BEGIN
 						SET @Status = '2'
-						IF (@returnMessage = '')
-								SET @returnMessage = 'Ag'
-						ELSE
-								SET @returnMessage = @returnMessage + ', ' + 'Ag'
+						--IF (@returnMessage = '')
+						--		SET @returnMessage = 'Ag'
+						--ELSE
+								SET @returnMessage = @returnMessage + '  ' + 'Ag'
 					END
-					ELSE
-					BEGIN
-						SET @lAg = 0.0
-						SET @hAg = 100.0
-					END
+					--ELSE
+					--BEGIN
+					--	SET @lAg = 0.0
+					--	SET @hAg = 100.0
+					--END
 				END	
 
 				
-				IF ( @checkAg<=@lAg OR @checkAg>@hAg)	
+				IF ( @checkAg < @lAg OR @checkAg>@hAg)	
 				BEGIN					
 					IF (@Status != '3')
 					BEGIN
 						SET @Status = '2'
-						IF (@returnMessage = '')
-							SET @returnMessage = 'Ag'
-						ELSE
-							SET @returnMessage = @returnMessage + ', ' + 'Ag'
+						--IF (@returnMessage = '')
+						--	SET @returnMessage = 'Ag'
+						--ELSE
+							SET @returnMessage = @returnMessage + '  ' + 'Ag'
 					END
 				END
 			END			--end				
@@ -1273,12 +1297,12 @@ BEGIN
 				BEGIN
 					SET @charlSc = (SELECT TOP 1 lSc FROM [dbo].[chemMinMax01] WHERE Alloy = @Alloy AND  [Diam]= @Diameter AND TYPE = 'S')									
 					SET @charhSc = (SELECT TOP 1 hSc FROM [dbo].[chemMinMax01] WHERE Alloy = @Alloy AND  [Diam]= @Diameter AND TYPE = 'S')
-					IF ((@charlSc IS NULL) OR (RTRIM(@charlSc) = '') OR (@Status != '3'))
+					IF ((@charlSc IS NULL) OR (RTRIM(@charlSc) = '') )
 						SET @lSc = 0.0
 					ELSE
 						SET @lSc = (SELECT TOP 1 CAST(lSc AS numeric(8,5))FROM [dbo].[chemMinMax01] WHERE Alloy = @Alloy AND  [Diam]= @Diameter AND TYPE = 'S')									
 
-					IF ((@charhSc IS NULL) OR (RTRIM(@charhSc) = '') OR (@Status != '3'))
+					IF ((@charhSc IS NULL) OR (RTRIM(@charhSc) = '') )
 						SET @hSc = 100.0
 					ELSE
 						SET @hSc = (SELECT TOP 1 CAST(hSc AS numeric(8,5))FROM [dbo].[chemMinMax01] WHERE Alloy = @Alloy AND  [Diam]= @Diameter AND TYPE = 'S')
@@ -1288,28 +1312,28 @@ BEGIN
 					IF (@Status != '3')
 					BEGIN
 						SET @Status = '2'
-						IF (@returnMessage = '')
-								SET @returnMessage = 'Sc'
-						ELSE
-								SET @returnMessage = @returnMessage + ', ' + 'Sc'
+						--IF (@returnMessage = '')
+						--		SET @returnMessage = 'Sc'
+						--ELSE
+								SET @returnMessage = @returnMessage + '  ' + 'Sc'
 					END
-					ELSE
-					BEGIN
-						SET @lSc = 0.0
-						SET @hSc = 100.0
-					END
+					--ELSE
+					--BEGIN
+					--	SET @lSc = 0.0
+					--	SET @hSc = 100.0
+					--END
 				END	
 
 				
-				IF ( @checkSc<=@lSc OR @checkSc>@hSc)	
+				IF ( @checkSc < @lSc OR @checkSc>@hSc)	
 				BEGIN					
 					IF (@Status != '3')
 					BEGIN
 						SET @Status = '2'
-						IF (@returnMessage = '')
-							SET @returnMessage = 'Sc'
-						ELSE
-							SET @returnMessage = @returnMessage + ', ' + 'Sc'
+						--IF (@returnMessage = '')
+						--	SET @returnMessage = 'Sc'
+						--ELSE
+							SET @returnMessage = @returnMessage + '  ' + 'Sc'
 					END
 				END
 			END
@@ -1334,12 +1358,12 @@ BEGIN
 				BEGIN
 					SET @charlSr = (SELECT TOP 1 lSr FROM [dbo].[chemMinMax01] WHERE Alloy = @Alloy AND  [Diam]= @Diameter AND TYPE = 'S')									
 					SET @charhSr = (SELECT TOP 1 hSr FROM [dbo].[chemMinMax01] WHERE Alloy = @Alloy AND  [Diam]= @Diameter AND TYPE = 'S')
-					IF ((@charlSr IS NULL) OR (RTRIM(@charlSr) = '') OR (@Status != '3'))
+					IF ((@charlSr IS NULL) OR (RTRIM(@charlSr) = '') )
 						SET @lSr = 0.0
 					ELSE
 						SET @lSr = (SELECT TOP 1 CAST(lSr AS numeric(8,5))FROM [dbo].[chemMinMax01] WHERE Alloy = @Alloy AND  [Diam]= @Diameter AND TYPE = 'S')									
 
-					IF ((@charhSr IS NULL) OR (RTRIM(@charhSr) = '') OR (@Status != '3'))
+					IF ((@charhSr IS NULL) OR (RTRIM(@charhSr) = '') )
 						SET @hSr = 100.0
 					ELSE
 						SET @hSr = (SELECT TOP 1 CAST(hSr AS numeric(8,5))FROM [dbo].[chemMinMax01] WHERE Alloy = @Alloy AND  [Diam]= @Diameter AND TYPE = 'S')
@@ -1349,28 +1373,28 @@ BEGIN
 					IF (@Status != '3')
 					BEGIN
 						SET @Status = '2'
-						IF (@returnMessage = '')
-								SET @returnMessage = 'Sr'
-						ELSE
-								SET @returnMessage = @returnMessage + ', ' + 'Sr'
+						--IF (@returnMessage = '')
+						--		SET @returnMessage = 'Sr'
+						--ELSE
+								SET @returnMessage = @returnMessage + '  ' + 'Sr'
 					END
-					ELSE
-					BEGIN
-						SET @lSr = 0.0
-						SET @hSr = 100.0
-					END
+					--ELSE
+					--BEGIN
+					--	SET @lSr = 0.0
+					--	SET @hSr = 100.0
+					--END
 				END	
 
 				
-				IF ( @checkSr<=@lSr OR @checkSr>@hSr)	
+				IF ( @checkSr < @lSr OR @checkSr>@hSr)	
 				BEGIN					
 					IF (@Status != '3')
 					BEGIN
 						SET @Status = '2'
-						IF (@returnMessage = '')
-							SET @returnMessage = 'Sr'
-						ELSE
-							SET @returnMessage = @returnMessage + ', ' + 'Sr'
+						--IF (@returnMessage = '')
+						--	SET @returnMessage = 'Sr'
+						--ELSE
+							SET @returnMessage = @returnMessage + '  ' + 'Sr'
 					END
 				END
 			END
@@ -1395,12 +1419,12 @@ BEGIN
 				BEGIN
 					SET @charlTiZr = (SELECT TOP 1 lTiZr FROM [dbo].[chemMinMax01] WHERE Alloy = @Alloy AND  [Diam]= @Diameter AND TYPE = 'S')									
 					SET @charhTiZr = (SELECT TOP 1 hTiZr FROM [dbo].[chemMinMax01] WHERE Alloy = @Alloy AND  [Diam]= @Diameter AND TYPE = 'S')
-					IF ((@charlTiZr IS NULL) OR (RTRIM(@charlTiZr) = '') OR (@Status != '3'))
+					IF ((@charlTiZr IS NULL) OR (RTRIM(@charlTiZr) = '') )
 						SET @lTiZr = 0.0
 					ELSE
 						SET @lTiZr = (SELECT TOP 1 CAST(lTiZr AS numeric(8,5))FROM [dbo].[chemMinMax01] WHERE Alloy = @Alloy AND  [Diam]= @Diameter AND TYPE = 'S')									
 
-					IF ((@charhTiZr IS NULL) OR (RTRIM(@charhTiZr) = '') OR (@Status != '3'))
+					IF ((@charhTiZr IS NULL) OR (RTRIM(@charhTiZr) = '') )
 						SET @hTiZr = 100.0
 					ELSE
 						SET @hTiZr = (SELECT TOP 1 CAST(hTiZr AS numeric(8,5))FROM [dbo].[chemMinMax01] WHERE Alloy = @Alloy AND  [Diam]= @Diameter AND TYPE = 'S')
@@ -1410,28 +1434,28 @@ BEGIN
 					IF (@Status != '3')
 					BEGIN
 						SET @Status = '2'
-						IF (@returnMessage = '')
-								SET @returnMessage = 'TiZr'
-						ELSE
-								SET @returnMessage = @returnMessage + ', ' + 'TiZr'
+						--IF (@returnMessage = '')
+						--		SET @returnMessage = 'TiZr'
+						--ELSE
+								SET @returnMessage = @returnMessage + '  ' + 'TiZr'
 					END
-					ELSE
-					BEGIN
-						SET @lTiZr = 0.0
-						SET @hTiZr = 100.0
-					END
+					--ELSE
+					--BEGIN
+					--	SET @lTiZr = 0.0
+					--	SET @hTiZr = 100.0
+					--END
 				END	
 
 				
-				IF ( @checkTiZr<=@lTiZr OR @checkTiZr>@hTiZr)	
+				IF ( @checkTiZr < @lTiZr OR @checkTiZr>@hTiZr)	
 				BEGIN					
 					IF (@Status != '3')
 					BEGIN
 						SET @Status = '2'
-						IF (@returnMessage = '')
-							SET @returnMessage = 'TiZr'
-						ELSE
-							SET @returnMessage = @returnMessage + ', ' + 'TiZr'
+						--IF (@returnMessage = '')
+						--	SET @returnMessage = 'TiZr'
+						--ELSE
+							SET @returnMessage = @returnMessage + '  ' + 'TiZr'
 					END
 				END
 			END
@@ -1472,13 +1496,16 @@ BEGIN
 
 			END
 		--END
-	END
+	--END
+
+	--(@Status != '2')
 -- If the values are not within the min/max limits STATUS IS RETURNED AS '2'
 --@returnMessage returns the list of Chemicals that are not in the limits
 --@returnHeatNo resturns the Heat Number that has the deviation. If the record doesn't have deviation, 
 --@returnHeatNo is ''
 
-
+--SET @returnMessage = @lCu
+-- + @hMn
 select @returnMessage , @returnHeatNo
 
 END
