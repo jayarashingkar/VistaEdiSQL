@@ -1,6 +1,6 @@
 ﻿USE [VistaEdiDB]
 GO
-/****** Object:  StoredProcedure [dbo].[ChemistryInfoInsert_Proc]    Script Date: 2/26/2018 11:07:36 AM ******/
+/****** Object:  StoredProcedure [dbo].[ChemistryInfoInsert_Proc]    Script Date: 2/27/2018 7:36:33 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
